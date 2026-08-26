@@ -39,3 +39,17 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# blog data & uploads
+/data
+/uploads
+
+# local runtime / test artifacts (do not commit)
+*.log
+cookies.txt
+login.json
+settings.json
+post.json
+edit.json
+aliyun-screenshot.png
+firewall-screenshot.png
