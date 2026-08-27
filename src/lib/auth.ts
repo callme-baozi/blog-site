@@ -1,4 +1,4 @@
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { createHmac, timingSafeEqual } from "node:crypto";
 
 const COOKIE_NAME = "blog_session";
@@ -60,10 +60,15 @@ export async function login(password: string): Promise<boolean> {
 export async function setSessionCookie() {
   const token = createToken();
   const cookieStore = await cookies();
+  const headerStore = await headers();
+  // Nginx が X-Forwarded-Proto を設定しているのでそれを見る；
+  // HTTP アクセス時に Secure cookie を付けるとブラウザが送信しなくなる
+  const proto = headerStore.get("x-forwarded-proto");
+  const isHttps = proto === "https";
   cookieStore.set(COOKIE_NAME, token, {
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "strict",
+    secure: isHttps,
+    sameSite: "lax",
     path: "/",
     maxAge: TOKEN_TTL_MS / 1000,
   });

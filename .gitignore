@@ -53,3 +53,16 @@ post.json
 edit.json
 aliyun-screenshot.png
 firewall-screenshot.png
+
+# 部署临时文件
+deploy.zip
+image.png
+aliyun-screenshot.png
+firewall-screenshot.png
+server.log
+server-err.log
+cookies.txt
+login.json
+settings.json
+post.json
+edit.json

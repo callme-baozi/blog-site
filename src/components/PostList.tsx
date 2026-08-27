@@ -61,7 +61,7 @@ export default function PostList({ initialPosts, author, pageSize = 10 }: PostLi
   }
 
   return (
-    <div>
+    <div className="divide-y divide-neutral-200">
       {posts.map((post) => (
         <PostCard key={post.id} post={post} author={author} />
       ))}

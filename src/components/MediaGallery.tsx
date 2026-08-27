@@ -4,7 +4,23 @@ import { useRef, useState, useEffect, useCallback } from "react";
 import VideoPlayer from "./VideoPlayer";
 import type { Asset } from "@/lib/types";
 
-// 媒体横向滑动卡片：固定大小、scroll-snap、左右渐变阴影
+// 媒体横向滑动卡片：固定大小、scroll-snap、左右边缘用 CSS mask 渐隐。
+// 渐变直接作用在滚动容器上，跟随卡片形状，不会产生覆盖层与圆角之间的缝隙。
+const FADE_WIDTH = 28; // px
+
+function buildMask(showLeft: boolean, showRight: boolean): string {
+  if (showLeft && showRight) {
+    return `linear-gradient(to right, transparent, black ${FADE_WIDTH}px, black calc(100% - ${FADE_WIDTH}px), transparent)`;
+  }
+  if (showLeft) {
+    return `linear-gradient(to right, transparent, black ${FADE_WIDTH}px)`;
+  }
+  if (showRight) {
+    return `linear-gradient(to left, transparent, black ${FADE_WIDTH}px)`;
+  }
+  return "none";
+}
+
 export default function MediaGallery({ assets }: { assets: Asset[] }) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const [showRightFade, setShowRightFade] = useState(false);
@@ -46,31 +62,18 @@ export default function MediaGallery({ assets }: { assets: Asset[] }) {
 
   if (assets.length === 0) return null;
 
-  return (
-    <div className="relative mt-2 -mx-1">
-      {/* 左側グラデーション（inline style で rgba 明示、iOS Safari 互換） */}
-      <div
-        className="pointer-events-none absolute left-1 top-0 bottom-0 z-10 w-6 transition-opacity duration-200"
-        style={{
-          opacity: showLeftFade ? 1 : 0,
-          background: "linear-gradient(to right, rgba(255,255,255,1), rgba(255,255,255,0))",
-        }}
-      />
-      {/* 右側グラデーション */}
-      <div
-        className="pointer-events-none absolute right-1 top-0 bottom-0 z-10 w-8 transition-opacity duration-200"
-        style={{
-          opacity: showRightFade ? 1 : 0,
-          background: "linear-gradient(to left, rgba(255,255,255,1), rgba(255,255,255,0))",
-        }}
-      />
+  const maskImage = buildMask(showLeftFade, showRightFade);
 
+  return (
+    <div className="mt-2 -mx-1">
       <div
         ref={scrollRef}
         className="flex gap-1.5 overflow-x-auto scroll-smooth px-1 pb-1"
         style={{
           scrollSnapType: "x mandatory",
           WebkitOverflowScrolling: "touch",
+          WebkitMaskImage: maskImage,
+          maskImage,
         }}
       >
         {assets.map((asset) => (
