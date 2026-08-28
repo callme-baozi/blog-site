@@ -1,85 +1,40 @@
 "use client";
 
-import { useRef, useState, useEffect, useCallback } from "react";
+import { useState } from "react";
 import VideoPlayer from "./VideoPlayer";
+import MediaLightbox from "./MediaLightbox";
 import type { Asset } from "@/lib/types";
 
-// 媒体横向滑动卡片：固定大小、scroll-snap、左右边缘用 CSS mask 渐隐。
-// 渐变直接作用在滚动容器上，跟随卡片形状，不会产生覆盖层与圆角之间的缝隙。
-const FADE_WIDTH = 28; // px
-
-function buildMask(showLeft: boolean, showRight: boolean): string {
-  if (showLeft && showRight) {
-    return `linear-gradient(to right, transparent, black ${FADE_WIDTH}px, black calc(100% - ${FADE_WIDTH}px), transparent)`;
-  }
-  if (showLeft) {
-    return `linear-gradient(to right, transparent, black ${FADE_WIDTH}px)`;
-  }
-  if (showRight) {
-    return `linear-gradient(to left, transparent, black ${FADE_WIDTH}px)`;
-  }
-  return "none";
-}
-
+// 媒体横向滑动卡片：固定大小、scroll-snap。
+// クリックで画像は拡大表示、動画はポップアップ再生する（MediaLightbox）。
 export default function MediaGallery({ assets }: { assets: Asset[] }) {
-  const scrollRef = useRef<HTMLDivElement>(null);
-  const [showRightFade, setShowRightFade] = useState(false);
-  const [showLeftFade, setShowLeftFade] = useState(false);
-
-  const updateFades = useCallback(() => {
-    const el = scrollRef.current;
-    if (!el) return;
-    const { scrollLeft, scrollWidth, clientWidth } = el;
-    // iOS のサブピクセル誤差を考慮して 2px のマージン
-    setShowRightFade(scrollLeft + clientWidth < scrollWidth - 2);
-    setShowLeftFade(scrollLeft > 2);
-  }, []);
-
-  useEffect(() => {
-    const el = scrollRef.current;
-    if (!el) return;
-
-    // 初回は rAF でレイアウト確定後に計算（iOS Safari 対策）
-    const raf = requestAnimationFrame(() => updateFades());
-
-    el.addEventListener("scroll", updateFades, { passive: true });
-    window.addEventListener("resize", updateFades);
-
-    // コンテナサイズ変化を監視（画面回転・動的レイアウト対策）
-    let resizeObserver: ResizeObserver | null = null;
-    if (typeof ResizeObserver !== "undefined") {
-      resizeObserver = new ResizeObserver(() => updateFades());
-      resizeObserver.observe(el);
-    }
-
-    return () => {
-      cancelAnimationFrame(raf);
-      el.removeEventListener("scroll", updateFades);
-      window.removeEventListener("resize", updateFades);
-      resizeObserver?.disconnect();
-    };
-  }, [updateFades, assets.length]);
+  const [openIndex, setOpenIndex] = useState<number | null>(null);
 
   if (assets.length === 0) return null;
-
-  const maskImage = buildMask(showLeftFade, showRightFade);
 
   return (
     <div className="mt-2 -mx-1">
       <div
-        ref={scrollRef}
         className="flex gap-1.5 overflow-x-auto scroll-smooth px-1 pb-1"
         style={{
           scrollSnapType: "x mandatory",
           WebkitOverflowScrolling: "touch",
-          WebkitMaskImage: maskImage,
-          maskImage,
         }}
       >
-        {assets.map((asset) => (
+        {assets.map((asset, i) => (
           <div
             key={asset.id}
-            className="relative flex-shrink-0 overflow-hidden rounded-xl bg-neutral-100"
+            role="button"
+            tabIndex={0}
+            aria-label={asset.type === "image" ? "画像を拡大表示" : "動画を再生"}
+            onClick={() => setOpenIndex(i)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                setOpenIndex(i);
+              }
+            }}
+            className="relative flex-shrink-0 cursor-pointer overflow-hidden rounded-xl bg-neutral-100 transition-opacity hover:opacity-90 focus-visible:outline-2 focus-visible:outline-blue-500"
             style={{
               width: "calc((100% - 3px) / 1.5)",
               aspectRatio: "3 / 2",
@@ -102,11 +57,20 @@ export default function MediaGallery({ assets }: { assets: Asset[] }) {
                 height={asset.height || undefined}
                 duration={asset.duration || undefined}
                 fill
+                onClick={() => setOpenIndex(i)}
               />
             )}
           </div>
         ))}
       </div>
+
+      {openIndex !== null ? (
+        <MediaLightbox
+          assets={assets}
+          initialIndex={openIndex}
+          onClose={() => setOpenIndex(null)}
+        />
+      ) : null}
     </div>
   );
 }

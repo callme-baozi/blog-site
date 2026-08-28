@@ -10,10 +10,13 @@ interface VideoPlayerProps {
   duration?: number;
   /** 親コンテナいっぱいに広げる（メディアカード用） */
   fill?: boolean;
+  /** 指定時は内聯再生せず、クリックで外部アクション（図庫ポップアップ等）を呼ぶ */
+  onClick?: () => void;
 }
 
 // 動画クリックで読み込み：video 要素は常に DOM に存在させ（preload="none"）、
 // ユーザージェスチャー内で直接 play() を呼ぶことで iOS Safari でも再生可能にする。
+// onClick が指定された場合はプレビューとして扱い、クリックでコールバックを呼ぶ。
 export default function VideoPlayer({
   src,
   poster,
@@ -21,6 +24,7 @@ export default function VideoPlayer({
   height,
   duration,
   fill = false,
+  onClick,
 }: VideoPlayerProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [started, setStarted] = useState(false);
@@ -36,6 +40,10 @@ export default function VideoPlayer({
     : "relative w-full overflow-hidden rounded-xl bg-black";
 
   const handlePlay = useCallback(() => {
+    if (onClick) {
+      onClick();
+      return;
+    }
     const video = videoRef.current;
     if (!video) return;
     if (!video.src) video.src = src;
@@ -43,10 +51,26 @@ export default function VideoPlayer({
       // iOS 等で自動再生が拒否された場合、controls を表示してタップを促す
     });
     setStarted(true);
-  }, [src]);
+  }, [onClick, src]);
+
+  const containerProps = onClick
+    ? {
+        onClick,
+        role: "button" as const,
+        tabIndex: 0,
+        onKeyDown: (e: React.KeyboardEvent) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            onClick();
+          }
+        },
+        className: `${containerClass} cursor-pointer`,
+        style: aspectStyle,
+      }
+    : { className: containerClass, style: aspectStyle };
 
   return (
-    <div className={containerClass} style={aspectStyle}>
+    <div {...containerProps}>
       <video
         ref={videoRef}
         poster={poster}
@@ -59,7 +83,10 @@ export default function VideoPlayer({
       {!started ? (
         <button
           type="button"
-          onClick={handlePlay}
+          onClick={(e) => {
+            e.stopPropagation();
+            handlePlay();
+          }}
           className="group absolute inset-0 flex items-center justify-center"
           aria-label="動画を再生"
         >
