@@ -7,6 +7,8 @@ import type { Asset } from "@/lib/types";
 
 // 媒体横向滑动卡片：固定大小、scroll-snap。
 // クリックで画像は拡大表示、動画はポップアップ再生する（MediaLightbox）。
+// 卡片统一采用 9:16（1080×1920）竖版比例：宽度不变、高度随比例。
+// 图片铺满裁剪（object-cover）；视频保持自身比例居中，上下留黑（object-contain）。
 export default function MediaGallery({ assets }: { assets: Asset[] }) {
   const [openIndex, setOpenIndex] = useState<number | null>(null);
 
@@ -34,10 +36,10 @@ export default function MediaGallery({ assets }: { assets: Asset[] }) {
                 setOpenIndex(i);
               }
             }}
-            className="relative flex-shrink-0 cursor-pointer overflow-hidden rounded-xl bg-neutral-100 transition-opacity hover:opacity-90 focus-visible:outline-2 focus-visible:outline-blue-500"
+            className="relative flex-shrink-0 cursor-pointer overflow-hidden rounded-[5px] border border-neutral-200 bg-neutral-100 transition-opacity hover:opacity-90 focus-visible:outline-2 focus-visible:outline-blue-500"
             style={{
               width: "calc((100% - 3px) / 1.5)",
-              aspectRatio: "3 / 2",
+              aspectRatio: "9 / 16",
               scrollSnapAlign: "start",
             }}
           >

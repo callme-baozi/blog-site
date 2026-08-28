@@ -372,8 +372,6 @@ function VideoView({
         src={asset.url}
         poster={asset.poster_url || undefined}
         preload="metadata"
-        playsInline
-        webkit-playsinline="true"
         className="max-h-full max-w-full select-none object-contain"
         onClick={handleToggle}
         onTimeUpdate={(e) => setCurrent(e.currentTarget.currentTime)}

@@ -46,4 +46,6 @@ export interface SiteSettings {
   site_description: string;
   author_name: string;
   author_avatar_url: string | null;
+  /** 网站关键词（meta keywords），管理后台标签多选维护 */
+  keywords: string[];
 }

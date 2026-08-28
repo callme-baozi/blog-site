@@ -2,6 +2,7 @@
 
 import { useState, useRef, useCallback } from "react";
 import type { SiteSettings } from "@/lib/types";
+import TagMultiSelect from "./TagMultiSelect";
 
 export default function SettingsForm({
   initial,
@@ -14,6 +15,7 @@ export default function SettingsForm({
   const [siteDescription, setSiteDescription] = useState(initial.site_description);
   const [authorName, setAuthorName] = useState(initial.author_name);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(initial.author_avatar_url);
+  const [keywords, setKeywords] = useState<string[]>(initial.keywords);
   const [saving, setSaving] = useState(false);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const [message, setMessage] = useState("");
@@ -59,6 +61,7 @@ export default function SettingsForm({
           site_title: siteTitle,
           site_description: siteDescription,
           author_name: authorName,
+          keywords,
         }),
       });
       if (!res.ok) {
@@ -74,7 +77,7 @@ export default function SettingsForm({
     } finally {
       setSaving(false);
     }
-  }, [siteTitle, siteDescription, authorName, onSaved]);
+  }, [siteTitle, siteDescription, authorName, keywords, onSaved]);
 
   return (
     <div className="space-y-6 px-4 py-5">
@@ -142,6 +145,13 @@ export default function SettingsForm({
             className="w-full rounded-lg border border-neutral-300 px-3 py-2 text-base outline-none focus:border-neutral-900"
             placeholder="Author"
           />
+        </div>
+
+        <div>
+          <label className="mb-1 block text-sm font-medium text-neutral-700">
+            网站关键词（タグ）
+          </label>
+          <TagMultiSelect value={keywords} onChange={setKeywords} />
         </div>
       </div>
 

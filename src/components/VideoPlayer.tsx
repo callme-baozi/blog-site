@@ -75,8 +75,6 @@ export default function VideoPlayer({
         ref={videoRef}
         poster={poster}
         preload="none"
-        playsInline
-        webkit-playsinline="true"
         controls={started}
         className="h-full w-full object-contain"
       />

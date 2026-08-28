@@ -76,6 +76,25 @@ export async function PUT(request: Request) {
   if (updates.author_name !== undefined && updates.author_name.trim() === "") {
     return NextResponse.json({ error: "作者名を入力してください" }, { status: 400 });
   }
+  if (updates.keywords !== undefined) {
+    if (!Array.isArray(updates.keywords)) {
+      return NextResponse.json({ error: "关键词の形式が正しくありません" }, { status: 400 });
+    }
+    const seen = new Set<string>();
+    const cleaned: string[] = [];
+    for (const raw of updates.keywords) {
+      if (typeof raw !== "string") continue;
+      const keyword = raw.trim();
+      if (!keyword) continue;
+      if (keyword.length > 50) continue;
+      const key = keyword.toLowerCase();
+      if (seen.has(key)) continue;
+      seen.add(key);
+      cleaned.push(keyword);
+      if (cleaned.length >= 50) break;
+    }
+    updates.keywords = cleaned;
+  }
 
   const settings = updateSettings(updates);
   return NextResponse.json(settings);

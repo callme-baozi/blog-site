@@ -254,7 +254,23 @@ const DEFAULT_SETTINGS: SiteSettings = {
   site_description: "",
   author_name: process.env.NEXT_PUBLIC_AUTHOR_NAME || "Author",
   author_avatar_url: null,
+  keywords: [],
 };
+
+function parseKeywords(value: string | null | undefined): string[] {
+  if (!value) return [];
+  try {
+    const parsed: unknown = JSON.parse(value);
+    if (Array.isArray(parsed)) {
+      return parsed.filter(
+        (k): k is string => typeof k === "string" && k.trim() !== ""
+      );
+    }
+  } catch {
+    // 存储格式异常时视为无关键词
+  }
+  return [];
+}
 
 export function getSettings(): SiteSettings {
   const db = getDb();
@@ -271,6 +287,7 @@ export function getSettings(): SiteSettings {
     site_description: map.site_description ?? DEFAULT_SETTINGS.site_description,
     author_name: map.author_name ?? DEFAULT_SETTINGS.author_name,
     author_avatar_url: map.author_avatar_url ?? DEFAULT_SETTINGS.author_avatar_url,
+    keywords: parseKeywords(map.keywords),
   };
 }
 
@@ -281,7 +298,8 @@ export function updateSettings(updates: Partial<SiteSettings>): SiteSettings {
       "INSERT INTO settings (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value"
     );
     for (const [key, value] of Object.entries(updates)) {
-      stmt.run(key, value ?? null);
+      const stored = Array.isArray(value) ? JSON.stringify(value) : value;
+      stmt.run(key, stored ?? null);
     }
   });
   tx();
