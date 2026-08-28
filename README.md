@@ -16,7 +16,7 @@
 - 帖子时间线（无限滚动，移动端 Threads 风格）
 - 富文本发帖：加粗、斜体、下划线、删除线、标题、列表、引用、链接、文字颜色
 - 图片上传与插入
-- 视频上传（自动截取第一帧作封面，点击才加载播放，省流量）
+- 视频上传（自动截取第一帧作封面，点击才加载播放，省流量；上传时自动做 MP4 faststart 优化，配合 HTTP Range 支持边下边播）
 - 单作者密码认证（httpOnly cookie）
 - 单条帖子页 `/p/[id]`
 - 响应式：移动优先，PC 居中兼容
@@ -43,10 +43,14 @@ npm run dev
 |---|---|---|
 | `AUTHOR_PASSWORD` | 是 | 作者登录密码 |
 | `AUTH_SECRET` | 否 | cookie 签名密钥，默认用密码 |
+| `FFMPEG_PATH` | 否 | ffmpeg 可执行文件路径，默认 `ffmpeg`；用于视频 faststart 优化 |
+| `FFMPEG_TIMEOUT_MS` | 否 | ffmpeg 处理超时（毫秒），默认 60000 |
 | `DATA_DIR` | 否 | SQLite 存储目录，默认 `./data` |
 | `UPLOAD_DIR` | 否 | 上传文件目录，默认 `./uploads` |
 | `NEXT_PUBLIC_SITE_NAME` | 否 | 站点名称 |
 | `NEXT_PUBLIC_AUTHOR_NAME` | 否 | 作者显示名 |
+
+> 说明：视频上传时若服务器安装了 ffmpeg，会自动执行 `-c copy -movflags +faststart` 把 MP4 的 moov 元数据移到文件开头，浏览器无需下载完整文件即可开始播放和拖动进度条。未安装 ffmpeg 时上传仍正常，只是不做该优化。
 
 ## 项目结构
 
@@ -61,17 +65,20 @@ src/
 │  │  ├─ auth/route.ts      # 登录状态/登出
 │  │  ├─ posts/route.ts     # 帖子列表/发布
 │  │  └─ upload/route.ts    # 图片/视频上传
-│  └─ uploads/[...path]/    # 开发环境媒体文件服务
+│  └─ uploads/[...path]/    # 开发环境媒体文件服务（支持 HTTP Range）
 ├─ components/
 │  ├─ PostCard.tsx          # 帖子卡片
 │  ├─ PostList.tsx          # 无限滚动列表
 │  ├─ RichText.tsx          # HTML 渲染（视频替换）
 │  ├─ VideoPlayer.tsx       # 点击加载视频
+│  ├─ MediaGallery.tsx      # 媒体滑动画廊
+│  ├─ MediaLightbox.tsx     # 抖音风全屏媒体弹窗
 │  └─ admin/                # 编辑器相关
 └─ lib/
    ├─ db.ts                 # SQLite 数据层
    ├─ storage.ts            # 存储抽象（本地实现）
    ├─ auth.ts               # 认证
+   ├─ video.ts              # 视频 faststart 优化（ffmpeg）
    ├─ sanitize.ts           # HTML XSS 过滤
    ├─ types.ts              # 类型定义
    └─ format.ts             # 时间/时长格式化
@@ -89,3 +96,4 @@ src/
 - [ ] 帖子编辑与删除
 - [ ] 草稿箱
 - [ ] 前端直传（presigned URL，减轻服务器带宽）
+- [ ] 长视频 HLS 分片（见 MediaLightbox 边下边播方案）

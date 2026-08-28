@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { isAuthenticated } from "@/lib/auth";
 import { getStorage } from "@/lib/storage";
 import { createAsset } from "@/lib/db";
+import { optimizeVideo } from "@/lib/video";
 import type { AssetType } from "@/lib/types";
 
 const MAX_FILE_SIZE = 200 * 1024 * 1024; // 200MB
@@ -42,8 +43,15 @@ export async function POST(request: Request) {
     );
   }
 
+  let buffer: Buffer = Buffer.from(await file.arrayBuffer());
+
+  // 動画は moov 前置（faststart）に最適化してストリーミング再生を有効化。
+  // ffmpeg が無い場合はそのまま保存される（アップロードは失敗しない）。
+  if (type === "video") {
+    buffer = await optimizeVideo(buffer, file.name, file.type);
+  }
+
   const storage = getStorage();
-  const buffer = Buffer.from(await file.arrayBuffer());
   const saved = await storage.save({
     filename: file.name,
     contentType: file.type,
