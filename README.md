@@ -97,3 +97,25 @@ src/
 - [ ] 草稿箱
 - [ ] 前端直传（presigned URL，减轻服务器带宽）
 - [ ] 长视频 HLS 分片（见 MediaLightbox 边下边播方案）
+
+
+## 重新部署的构建命令
+
+先拉取最新代码
+cd /var/www/blog-site && git pull 2>&1
+
+检查依赖是否有变化
+cd /var/www/blog-site && git diff HEAD~1 -- package.json | head -30
+
+package.json无变化，无需重新安装依赖直接执行构建
+cd /var/www/blog-site && NODE_OPTIONS="--max-old-space-size=512" ./node_modules/.bin/next build --webpack 2>&1 | tail -30
+
+构建成功，重启PM2进程并验证服务
+pm2 restart blog && sleep 3 && pm2 list && curl -sI http://localhost:3000 | head -3
+
+blog-site重新部署完成：
+·代码更新：拉取最新代码(9个文件变更，含新增
+TagMultiselect组件、settings API扩展等)
+·依赖：package.json无变化，跳过安装
+·构建：Next.js16.3.2 webpack构建成功（编译13.7s+Typescript10.6s)
+·运行：PM2进程b1og己重启，状态online,内存127.9MB,服务端口3000正常响应HTTP200

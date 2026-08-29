@@ -15,6 +15,9 @@ export default async function HomePage() {
     <main className="mx-auto min-h-screen w-full max-w-[600px] border-x border-neutral-200 bg-white">
       <header className="sticky top-0 z-10 border-b border-neutral-200 bg-white/85 px-4 py-3 backdrop-blur-md sm:px-5">
         <h1 className="text-lg font-bold">{settings.site_title}</h1>
+        {settings.site_description ? (
+          <p className="mt-0.5 text-sm text-neutral-500">{settings.site_description}</p>
+        ) : null}
       </header>
       <PostList
         initialPosts={initialPosts}
